@@ -15,30 +15,36 @@ MoneyMask=function(_BaseMask){_inherits(MoneyMask,_BaseMask);function MoneyMask(
 
 
 value,settings,oldValue){
-var mergedSettings=_get(MoneyMask.prototype.__proto__||Object.getPrototypeOf(MoneyMask.prototype),'mergeSettings',this).call(this,MONEY_MASK_SETTINGS,settings);
+var mergedSettings=_get(MoneyMask.prototype.__proto__||Object.getPrototypeOf(MoneyMask.prototype),'mergeSettings',this).call(this,MONEY_MASK_SETTINGS,settings);var
+unit=mergedSettings.unit,precision=mergedSettings.precision;
 
-var sanitized=this._sanitize(value,mergedSettings);
 
-if(mergedSettings.suffixUnit&&oldValue&&sanitized){
-if(sanitized.length==oldValue.length-1){
-var cleared=this.removeNotNumbers(sanitized);
-sanitized=cleared.substr(0,cleared.length-1);
-}
-}
+var sanitized=precision>0?
+value.replace(/[^\d\.]/g,'').
+replace(/\./,'x').
+replace(/\./g,'').
+replace(/x/,'.'):
+value.replace(/[^\d]/g,'');
 
-var masked=this.getVMasker().toMoney(sanitized,mergedSettings);
+
+sanitized=sanitized.indexOf('.')>=1?
+sanitized.substring(0,sanitized.indexOf('.')+precision+1):
+sanitized;
+
+
+var formatted=sanitized.replace(/(\d)(?=(\d{3})+(?!\d))/g,"$1,");
+
+
+var masked=value!==unit&&value!==unit+'.'?''+
+unit+formatted:
+'';
 
 return masked;
 }},{key:'getRawValue',value:function getRawValue(
 
 maskedValue,settings){
-var mergedSettings=_get(MoneyMask.prototype.__proto__||Object.getPrototypeOf(MoneyMask.prototype),'mergeSettings',this).call(this,MONEY_MASK_SETTINGS,settings);
-var normalized=_get(MoneyMask.prototype.__proto__||Object.getPrototypeOf(MoneyMask.prototype),'removeNotNumbers',this).call(this,maskedValue);
-
-var dotPosition=normalized.length-mergedSettings.precision;
-normalized=this._insert(normalized,dotPosition,'.');
-
-return Number(normalized);
+var normalized=Number(maskedValue.replace(/[^\d\.]/g,''));
+return normalized;
 }},{key:'validate',value:function validate(
 
 value,settings){
@@ -49,7 +55,6 @@ value,settings){
 if(typeof value==='number'){
 return value.toFixed(settings.precision);
 }
-
 return value;
 }},{key:'_insert',value:function _insert(
 
